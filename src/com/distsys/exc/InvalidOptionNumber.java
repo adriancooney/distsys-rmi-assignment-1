@@ -1,6 +1,4 @@
 package com.distsys.exc;
 
-public class InvalidOptionNumber extends Exception {
-
-}
+public class InvalidOptionNumber extends Exception {}
 
