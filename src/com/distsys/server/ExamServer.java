@@ -1,9 +1,9 @@
 // ExamServer.java
 
-package com.distsys;
+package com.distsys.server;
 
-import com.distsys.exc.NoMatchingAssessment;
-import com.distsys.exc.UnauthorizedAccess;
+import com.distsys.server.exc.NoMatchingAssessment;
+import com.distsys.server.exc.UnauthorizedAccess;
 
 import java.rmi.Remote;
 import java.rmi.RemoteException;

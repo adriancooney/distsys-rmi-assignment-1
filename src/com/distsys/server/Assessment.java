@@ -1,9 +1,9 @@
 // Assessment.java 
 
-package com.distsys;
+package com.distsys.server;
 
-import com.distsys.exc.InvalidOptionNumber;
-import com.distsys.exc.InvalidQuestionNumber;
+import com.distsys.server.exc.InvalidOptionNumber;
+import com.distsys.server.exc.InvalidQuestionNumber;
 
 import java.util.Date;
 import java.util.List;
@@ -17,7 +17,7 @@ public interface Assessment extends Serializable {
 	// Return the final date / time for submission of completed assessment
 	public Date getClosingDate();
 
-	// Return a list of all questions and anser options
+	// Return a list of all questions and answer options
 	public List<Question> getQuestions();
 
 	// Return one question only with answer options
