@@ -1,6 +1,6 @@
 // Question.java
 
-package com.distsys.server;
+package com.distsys;
 
 import java.io.Serializable;
 

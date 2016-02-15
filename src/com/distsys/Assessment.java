@@ -1,9 +1,9 @@
 // Assessment.java 
 
-package com.distsys.server;
+package com.distsys;
 
-import com.distsys.server.exc.InvalidOptionNumber;
-import com.distsys.server.exc.InvalidQuestionNumber;
+import com.distsys.exc.InvalidOptionNumber;
+import com.distsys.exc.InvalidQuestionNumber;
 
 import java.util.Date;
 import java.util.List;
@@ -29,7 +29,8 @@ public interface Assessment extends Serializable {
 		InvalidQuestionNumber, InvalidOptionNumber;
 
 	// Return selected answer or zero if none selected yet
-	public int getSelectedAnswer(int questionNumber);
+	public int getSelectedAnswer(int questionNumber) throws
+			InvalidQuestionNumber;
 
 	// Return studentid associated with this assessment object
 	// This will be preset on the server before object is downloaded
