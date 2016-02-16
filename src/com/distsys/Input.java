@@ -3,8 +3,9 @@ package com.distsys;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+
 /**
- * Created by adrian on 15/02/2016.
+ * Simple input reader like Scanner.
  */
 public class Input {
     BufferedReader line;
@@ -28,7 +29,7 @@ public class Input {
     }
 
     public int getNumber(String message) throws IOException {
-        return this.getValue(message, "Number", Integer::parseInt);
+        return this.getValue(message, "Number", (str) -> Integer.parseInt(str.trim()));
     }
 
     public String getString(String message) throws IOException {

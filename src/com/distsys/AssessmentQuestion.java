@@ -17,19 +17,23 @@ public class AssessmentQuestion implements Question {
         this.correctAnswer = correctAnswer;
     }
 
+    public int getCorrectAnswer() {
+        return correctAnswer;
+    }
+
     @Override
     public int getQuestionNumber() {
-        return 0;
+        return this.index;
     }
 
     @Override
     public String getQuestionDetail() {
-        return null;
+        return this.content;
     }
 
     @Override
     public String[] getAnswerOptions() {
-        return new String[0];
+        return this.answers;
     }
 
     public void select(int selection) {
@@ -42,5 +46,6 @@ public class AssessmentQuestion implements Question {
 
     public int getSelected() {
         return selected;
+
     }
 }

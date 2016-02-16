@@ -1,6 +1,7 @@
 package com.distsys;
 
 import com.distsys.ExamServer;
+import com.distsys.exc.InvalidOptionNumber;
 import com.distsys.exc.NoMatchingAssessment;
 import com.distsys.exc.UnauthorizedAccess;
 import com.sun.tools.javah.Util;
@@ -10,6 +11,8 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -34,6 +37,9 @@ public class Examiner {
         this.run();
     }
 
+    /**
+     * Run the program.
+     */
     private void run() {
         try {
             // Log in first
@@ -59,9 +65,9 @@ public class Examiner {
      * The menu functions available.
      */
     private static final String[] menuItems = new String[] {
-            "Get your assessments",
-            "Get assessment for course",
-            "Exit"
+        "List your assessments",
+        "Complete an assessment",
+        "Exit"
     };
 
     /**
@@ -80,12 +86,12 @@ public class Examiner {
         int selection = this.input.getNumber("Menu item: ");
 
         switch(Examiner.menuItems[selection - 1]) {
-            case "Get your assessments":
+            case "List your assessments":
                 this.getSummary();
                 break;
 
-            case "Get assessment for course":
-                this.getAssesmentForCourse();
+            case "Complete an assessment":
+                this.getAssessmentForCourse();
                 break;
 
             case "Exit":
@@ -99,17 +105,96 @@ public class Examiner {
         return false;
     }
 
-    private void getAssesmentForCourse() throws IOException, UnauthorizedAccess {
+    /**
+     * Get an assessment for a course.
+     * @throws IOException
+     * @throws UnauthorizedAccess
+     */
+    private void getAssessmentForCourse() throws IOException, UnauthorizedAccess {
         String courseCode = this.input.getString("Course code:");
 
         try {
-            Assessment assessment = this.server.getAssessment(this.token, this.id, courseCode);
-            System.out.println(assessment);
+            CourseAssessment assessment = (CourseAssessment) this.server.getAssessment(this.token, this.id, courseCode);
+            this.completeAssessment(assessment);
+            this.server.submitAssessment(this.token, this.id, assessment);
         } catch (NoMatchingAssessment noMatchingAssessment) {
             this.print("No matching assessments for that course.");
         }
     }
 
+    /**
+     * Complete an assessment for a student.
+     * @param assessment
+     * @throws IOException
+     */
+    private void completeAssessment(CourseAssessment assessment) throws IOException {
+        List<Question> assessmentQuestions = assessment.getQuestions();
+        LinkedList<Question> questions = new LinkedList<>(assessmentQuestions);
+
+        this.print("Starting assessment for:");
+        this.print(assessment.summary());
+        for(Question question : assessmentQuestions) {
+            this.askQuestion((AssessmentQuestion) question);
+        }
+
+        this.print("Assessment complete.");
+        int correct = 0;
+        int incorrect = 0;
+        int total = assessmentQuestions.size();
+
+        for(int i = 0; i < total; i++) {
+            AssessmentQuestion completedQuestion = (AssessmentQuestion) assessmentQuestions.get(i);
+
+            if(completedQuestion.isCorrect()) correct++;
+            else incorrect++;
+        }
+
+        this.print(String.format("Correct: %d, incorrect: %d, total: %d, grade: %s", correct, incorrect, total, Examiner.grade(correct/(double) total)));
+    }
+
+    /**
+     * Simple grading function to a letter for a numeric grade.
+     * @param score
+     * @return
+     */
+    private static String grade(double score) {
+        if(score < 0.4) return "D";
+        else if(score < 0.5) return "C";
+        else if(score < 0.6) return "B";
+        else return "A";
+    }
+
+    /**
+     * Ask a question and recieve update the answer (on the question object).
+     * @param question
+     * @throws IOException
+     */
+    private void askQuestion(AssessmentQuestion question) throws IOException {
+        this.input.print(String.format("[%d] %s", question.getQuestionNumber(), question.getQuestionDetail()));
+
+        int i = 0;
+        String[] answers = question.getAnswerOptions();
+        for(String answer : answers) {
+            this.input.print(String.format("\t(%d) %s" + (question.getCorrectAnswer() == i ? " *" : ""), ++i, answer));
+        }
+
+        int answer = this.input.getNumber("Answer number:");
+
+        if(answer < 1 || answer > answers.length) {
+            this.print("Invalid option. Please select try again.");
+            this.askQuestion(question);
+            return;
+        }
+
+        question.select(answer - 1);
+    }
+
+    /**
+     * Return a summary of all the assessments.
+     * @throws NoMatchingAssessment
+     * @throws UnauthorizedAccess
+     * @throws RemoteException
+     */
     private void getSummary() throws NoMatchingAssessment, UnauthorizedAccess, RemoteException {
         ArrayList<String> summaries = (ArrayList<String>) this.server.getAvailableSummary(this.token, this.id);
 
@@ -123,7 +208,7 @@ public class Examiner {
      * @param message
      */
     private void print(String message) {
-        this.input.print(">> " + message);
+        this.input.print(">> " + String.join("\n>> ", message.split("\n")));
     }
 
     /**

@@ -10,9 +10,6 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
-/**
- * Created by adrian on 15/02/2016.
- */
 public class CourseAssessment implements Assessment {
     private int studentid;
     private String code;
@@ -20,6 +17,12 @@ public class CourseAssessment implements Assessment {
     private Date closingDate;
     private ArrayList<Question> questions = new ArrayList<>();
 
+    /**
+     * Create a new course assessment that's due five days from now.
+     * @param studentid
+     * @param courseCode
+     * @param name
+     */
     public CourseAssessment(int studentid, String courseCode, String name) {
         this(studentid, courseCode, name, null);
 
@@ -29,6 +32,13 @@ public class CourseAssessment implements Assessment {
         this.closingDate = c.getTime();
     }
 
+    /**
+     * Create a new course assessment for a student.
+     * @param studentid
+     * @param courseCode
+     * @param name
+     * @param closingDate
+     */
     public CourseAssessment(int studentid, String courseCode, String name, Date closingDate) {
         this.studentid = studentid;
         this.code = courseCode;
@@ -36,22 +46,23 @@ public class CourseAssessment implements Assessment {
         this.closingDate = closingDate;
     }
 
+    /**
+     * Get the course code string.
+     * @return String
+     */
     public String getCourseCode() {
         return code;
     }
 
     @Override
     public String getInformation() {
-        return String.format("%s - %s", this.code, this.name);
+        SimpleDateFormat fmt = new SimpleDateFormat("E, d-M-y");
+        return String.format("%s - %s (due on %s)", this.code, this.name, fmt.format(this.closingDate));
     }
 
     @Override
     public Date getClosingDate() {
         return this.closingDate;
-    }
-
-    public void addQuestion(Question question) {
-        this.questions.add(question);
     }
 
     @Override
@@ -79,7 +90,19 @@ public class CourseAssessment implements Assessment {
         return this.studentid;
     }
 
+    /**
+     * Add a question to the assessment.
+     * @param question
+     */
+    public void addQuestion(Question question) {
+        this.questions.add(question);
+    }
+
+    /**
+     * Return a simple summary of the course.
+     * @return String
+     */
     public String summary() {
-        return String.format(this.getInformation() + String.format("\n Questions: %d\t Student: %d", this.questions.size(), this.studentid));
+        return String.format(this.getInformation(), this.studentid);
     }
 }

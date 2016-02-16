@@ -8,6 +8,7 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 
@@ -79,7 +80,7 @@ public class ExamEngine implements ExamServer {
 
         this.log(String.format("Login attempt: %d:%s", studentid, password));
 
-        if(studentid == ExamEngine.USER_ID || password.equals(ExamEngine.USER_PASS)) {
+        if(studentid == ExamEngine.USER_ID && password.equals(ExamEngine.USER_PASS)) {
             Session userSession = this.createSession(studentid);
 
             this.generateData(studentid);
@@ -91,6 +92,9 @@ public class ExamEngine implements ExamServer {
     // Return a summary list of Assessments currently available for this studentid
     public List<String> getAvailableSummary(int token, int studentid) throws
                 UnauthorizedAccess, NoMatchingAssessment, RemoteException {
+
+        // Validate the session
+        this.validateSession(token);
 
         ArrayList<String> summaries = new ArrayList<>();
 
@@ -124,24 +128,39 @@ public class ExamEngine implements ExamServer {
     public void submitAssessment(int token, int studentid, Assessment completed) throws 
                 UnauthorizedAccess, NoMatchingAssessment, RemoteException {
 
-        // TBD: You need to implement this method!
+        // Validate the session
+        this.validateSession(token);
+
+        CourseAssessment assessment = (CourseAssessment) this.getAssessment(token, studentid, ((CourseAssessment) completed).getCourseCode());
+        this.assessments.remove(assessment);
     }
 
     /**
      * Generate courses assessments and questions for a student.
      * @param studentid
      */
-    private CourseAssessment generateCourse(int studentid) {
-        String[] courses = new String[] {
-                "Maths",
-                "Dyamaths",
-                "Interopology",
-                "Skelotosis",
-                "Mixology",
-                "Particoxonomy"
+    private void generateData(int studentid) {
+        // Quick check to see if we have already generated data for this user
+        for(CourseAssessment assessment : this.assessments) {
+            if(studentid == assessment.getAssociatedID()) return;
+        }
+
+        String[] courseNames = new String[] {
+            "Maths",
+            "Dyamaths",
+            "Interopology",
+            "Skelotosis",
+            "Mixology",
+            "Particoxonomy"
         };
 
-        CourseAssessment assessment = new CourseAssessment(studentid, "MA" + ExamEngine.random.nextInt(800) + 100, courses[random.nextInt(5)]);
+        String[] courseCodes = new String[] {
+            "MA",
+            "FO",
+            "PT",
+            "CT",
+            "RM"
+        };
 
         String[] answers = new String[] {
             "Yes",
@@ -158,21 +177,19 @@ public class ExamEngine implements ExamServer {
             "Why do so many people eat bananas?"
         };
 
-        for(int i = 0; i < 5; i++) {
-            assessment.addQuestion(new AssessmentQuestion(i, questions[i], answers, ExamEngine.random.nextInt(5)));
-        }
+        for(int i = 0; i < courseCodes.length; i++) {
+            CourseAssessment assessment = new CourseAssessment(studentid, courseCodes[i], courseNames[i]);
 
-        return assessment;
-    }
+            for(int u = 0; u < 5; u++) {
+                assessment.addQuestion(new AssessmentQuestion(u, questions[u], answers, ExamEngine.random.nextInt(4)));
+            }
 
-    private void generateData(int studentid) {
-        for(int i = 0; i < 5; i++) {
-            this.addAssessment(this.generateCourse(studentid));
+            this.addAssessment(assessment);
         }
     }
 
     public static void main(String[] args) {
-        // Add in the policy file
+        // Add in the policy file instead of using a command flag
         System.setProperty("java.security.policy", "global.policy");
 
         if (System.getSecurityManager() == null) {
@@ -184,8 +201,10 @@ public class ExamEngine implements ExamServer {
             ExamServer engine = new ExamEngine();
             ExamServer stub =
                 (ExamServer) UnicastRemoteObject.exportObject(engine, 0);
+
             Registry registry = LocateRegistry.getRegistry();
             registry.rebind(name, stub);
+
             System.out.println("ExamEngine bound. Bound classes:");
             System.out.println("\t- " + String.join("\n\t", registry.list()));
         } catch (Exception e) {
